@@ -2,14 +2,26 @@ const mongoose = require('mongoose');
 
 // Define the connector schema
 const connectorSchema = new mongoose.Schema({
-    type: {
+    name: {
         type: String,
         required: true
     },
-    type_id: {
-        type: Number,
+    protocol: {
+        type: String,
         required: true
-    }
+    },
+    parameters: [
+        {
+            name: {
+                type: String,
+                required: true
+            },
+            value: {
+                type: String,
+                required: true
+            }
+        }
+    ]
 });
 
 // Export the connector schema

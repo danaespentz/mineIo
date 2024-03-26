@@ -6,12 +6,22 @@ const router = express.Router();
 //Post Method
 router.post('/cataloguing/asset', async (req, res) => {
     const asset = new ModelAsset({
-        type: req.body.type,
-        description: req.body.description,
+        model: {
+            description: req.body.description,
+            type: req.body.type,
+            format: req.body.format
+        },
         pilot: req.body.pilot,
-        format: req.body.format,
-        connector_type: req.body.connector_type,
-        connector_id: req.body.connector_id
+        connector: {
+            name: req.body.connector_name,
+            protocol: req.body.connector_protocol,
+            parameters: [
+                {
+                    name: req.body.parameters_name,
+                    value: req.body.parameters_value,
+                }
+            ]
+        }
     })
 
     try {
@@ -22,6 +32,21 @@ router.post('/cataloguing/asset', async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 })
+
+/*JSON object example
+
+{
+    "description": "camera1",
+    "type": "image",
+    "format": "jpeg",
+    "pilot": "1",
+    "connector_name": "mongodb",
+    "connector_protocol": "http",
+    "parameters_name": "mongo",
+    "parameters_value": "cluster0"
+}
+
+*/
 
 //Get all Method
 router.get('/cataloguing/asset', async (req, res) => {
@@ -70,8 +95,12 @@ router.get('/cataloguing/asset/Pilot/:PilotName', async (req, res) => {
 //Post Method
 router.post('/cataloguing/connector', async (req, res) => {
     const connector = new ModelConnector({
-        type: req.body.type,
-        type_id: req.body.type_id
+        name: req.body.name,
+        protocol: req.body.protocol,
+        parameters: {
+            name: req.body.parameters_name,
+            value: req.body.parameters_value,
+        }
     })
 
     try {
@@ -82,6 +111,17 @@ router.post('/cataloguing/connector', async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 })
+
+/*JSON object example
+
+{
+    "name": "mongodb",
+    "protocol": "http",
+    "parameters_name": "mongo",
+    "parameters_value": "cluster0"
+}
+
+*/
 
 //Get all Method
 router.get('/cataloguing/connector', async (req, res) => {
@@ -117,23 +157,12 @@ router.delete('/cataloguing/connector/:id', async (req, res) => {
     }
 })
 
-router.get('/cataloguing/connector/Type', async (req, res) => {
+router.get('/cataloguing/connectorTypes', async (req, res) => {
     try {
-        const types = await ModelConnector.distinct('type');
+        const types = await ModelConnector.distinct('name');
         res.json(types);
-    }
-    catch (error) {
+    } catch (error) {
         res.status(500).json({ message: error.message });
-    }
-})
-
-router.get('/cataloguing/connector/Type/:type_id', async (req, res) => {
-    try {
-        const connector = await ModelConnector.find({ type_id: req.params.type_id });
-        res.json(connector)
-    }
-    catch (error) {
-        res.status(500).json({ message: error.message })
     }
 })
 

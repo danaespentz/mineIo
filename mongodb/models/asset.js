@@ -1,30 +1,45 @@
 const mongoose = require('mongoose');
-
 const assetSchema = new mongoose.Schema({
-    type: {
-        required: true,
-        type: String
-    },
-    description: {
-        required: true,
-        type: String
+    model: {
+        description: {
+            type: String,
+            required: true
+        },
+        type: {
+            type: String,
+            required: true
+        },
+        format: {
+            type: String,
+            required: true
+        }
     },
     pilot: {
-        required: true,
-        type: Number
+        type: String,
+        required: true
     },
-    format: {
-        required: true,
-        type: String
-    },
-    connector_type: {
-        required: true,
-        type: String
-    },
-    connector_id: {
-        required: true,
-        type: Number
+    connector: {
+        name: {
+            type: String,
+            required: false
+        },
+        protocol: {
+            type: String,
+            required: false
+        },
+        parameters: [
+            {
+                name: {
+                    type: String,
+                    required: false
+                },
+                value: {
+                    type: String,
+                    required: false
+                }
+            }
+        ]
     }
-})
+});
 
-module.exports = mongoose.model('Asset', assetSchema)
+module.exports = mongoose.model('Asset', assetSchema);
