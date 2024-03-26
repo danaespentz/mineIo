@@ -5,45 +5,69 @@ const router = express.Router();
 
 //Post Method
 router.post('/cataloguing/asset', async (req, res) => {
+    const { model, pilot, interface: { connector, protocol, parameters } } = req.body;
+
     const asset = new ModelAsset({
         model: {
-            description: req.body.description,
-            type: req.body.type,
-            format: req.body.format
+            description: model.description,
+            type: model.type,
+            format: model.format
         },
-        pilot: req.body.pilot,
-        connector: {
-            name: req.body.connector_name,
-            protocol: req.body.connector_protocol,
-            parameters: [
-                {
-                    name: req.body.parameters_name,
-                    value: req.body.parameters_value,
-                }
-            ]
+        pilot: pilot,
+        interface: {
+            name: connector,
+            protocol: protocol,
+            parameters: parameters.map(param => ({
+                name: param.name,
+                value: param.value
+            }))
         }
-    })
+    });
 
     try {
         const assetToSave = await asset.save();
-        res.status(200).json(assetToSave)
+        res.status(200).json(assetToSave);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
     }
-    catch (error) {
-        res.status(400).json({ message: error.message })
-    }
-})
+});
+
 
 /*JSON object example
 
 {
-    "description": "camera1",
-    "type": "image",
-    "format": "jpeg",
-    "pilot": "1",
-    "connector_name": "mongodb",
-    "connector_protocol": "http",
-    "parameters_name": "mongo",
-    "parameters_value": "cluster0"
+	"model": {
+		"description": "Sample asset",
+		"type": "sensorial",
+		"format": "json"
+	},
+	"pilot": "Pilot4",
+	"interface": {
+		"connector": "mongo",
+		"protocol": "http",
+		"parameters": [
+			{
+				"name": "server",
+				"value": "mongo_ip"
+			},
+			{
+				"name": "port",
+				"value": "portnum"
+			},
+			{
+				"name": "collection",
+				"value": "collection_name"
+			},
+			{
+				"name": "username",
+				"value": "user"
+			},
+			{
+				"name": "password",
+				"value": "pass"
+			}
+		]
+	}
 }
 
 */

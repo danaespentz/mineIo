@@ -18,7 +18,7 @@ const assetSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    connector: {
+    interface: {
         name: {
             type: String,
             required: false
