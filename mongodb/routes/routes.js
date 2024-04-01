@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const ModelAsset = require('../models/asset');
 const ModelConnector = require('../models/connector');
 const router = express.Router();
@@ -190,4 +191,71 @@ router.get('/cataloguing/connectorTypes', async (req, res) => {
     }
 })
 
+router.post('/data/upload/:asset_id', async (req, res) => {
+    try {
+        const asset = await ModelAsset.findById(req.params.asset_id);
+        if (!asset) {
+            return res.status(404).json({ message: "Asset not found" });
+        }
+
+        const collectionParam = asset.interface.parameters.find(param => param.name === 'collection');
+        const collectionName = collectionParam ? collectionParam.value : null;
+
+        if (!collectionName) {
+            const directoryParam = asset.interface.parameters.find(param => param.name === 'directory');
+            const directory = directoryParam ? directoryParam.value : null;
+            if (directory) {
+                return res.status(200).json({ message: `Data assets should be imported to Hadoop in ${directory}`});
+            } else {
+                return res.status(400).json({ message: "Collection name not specified" });
+            }
+        }
+
+        let objects = req.body.values;
+
+        if (!Array.isArray(objects)) {
+            objects = [objects];
+        }
+        const collection = mongoose.connection.collection(collectionName);
+        await Promise.all(objects.map(async (object) => {
+            await collection.insertOne(object);
+        }));
+
+        res.status(200).json({ message: 'Data assets successfully imported' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/data/get/:asset_id', async (req, res) => {
+    try {
+        const asset = await ModelAsset.findById(req.params.asset_id);
+        if (!asset) {
+            return res.status(404).json({ message: "Asset not found" });
+        }
+        const collectionParam = asset.interface.parameters.find(param => param.name === 'collection');
+        const collectionName = collectionParam ? collectionParam.value : null;
+        if (!collectionName) {
+            const directoryParam = asset.interface.parameters.find(param => param.name === 'directory');
+            const directory = directoryParam ? directoryParam.value : null;
+            if (directory) {
+                return res.status(200).json({ message: `Data assets are stored to Hadoop in ${directory}`});
+            } else {
+                return res.status(400).json({ message: "Collection name not specified" });
+            }
+        }
+        const collection = mongoose.connection.collection(collectionName);
+        const data = await collection.find({}).toArray();
+        res.status(200).json(data);
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+})
+
 module.exports = router;
+
+//maybe take the credentials and make a connection everytime 
+//connection with hadoop
+//hadoop api maybe better cli ?
+//api with the import tool(arcdfs)
