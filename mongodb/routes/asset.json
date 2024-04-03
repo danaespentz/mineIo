@@ -1,0 +1,19 @@
+{
+	"values": [
+		{
+			"ts": "1234567890",
+			"temperature": "22.2",
+			"pressure": "0.44"
+		},
+		{
+			"ts": "1234567891",
+			"temperature": "22.2",
+			"pressure": "0.44"
+		},
+		{
+			"ts": "1234567892",
+			"temperature": "22.2",
+			"pressure": "0.44"
+		}
+	]
+}

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const ModelAsset = require('../models/asset');
 const ModelConnector = require('../models/connector');
 const router = express.Router();
+const import_to_hadoop = require('../models/import_to_hadoop');
 
 //Post Method
 router.post('/cataloguing/asset', async (req, res) => {
@@ -200,18 +201,20 @@ router.post('/data/upload/:asset_id', async (req, res) => {
 
         const collectionParam = asset.interface.parameters.find(param => param.name === 'collection');
         const collectionName = collectionParam ? collectionParam.value : null;
+        let objects = req.body.values;
 
         if (!collectionName) {
             const directoryParam = asset.interface.parameters.find(param => param.name === 'directory');
             const directory = directoryParam ? directoryParam.value : null;
             if (directory) {
+                console.log(objects);
+                console.log(directory);
+                import_to_hadoop(objects,directory);
                 return res.status(200).json({ message: `Data assets should be imported to Hadoop in ${directory}`});
             } else {
                 return res.status(400).json({ message: "Collection name not specified" });
             }
         }
-
-        let objects = req.body.values;
 
         if (!Array.isArray(objects)) {
             objects = [objects];
