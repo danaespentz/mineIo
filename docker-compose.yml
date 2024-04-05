@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   mongodb:
-    image: mongo
+    image: danaespentz/mongo:latest
     restart: always
     container_name: mongodb 
     ports:
@@ -11,8 +11,7 @@ services:
     - ./mongodb/data:/data/db
 
   mineio:
-    build:
-      context: ./mongodb 
+    image: danaespentz/mineio_mineio:latest
     restart: always 
     container_name: mineio 
     depends_on: 
