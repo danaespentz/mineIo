@@ -6,6 +6,23 @@ const router = express.Router();
 const import_to_hadoop = require('../models/import_to_hadoop');
 
 //Post Method
+/**
+ * @swagger
+ * /cataloguing/asset:
+ *   post:
+ *     description: Create a new asset
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/asset'
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Bad request
+ */
 router.post('/cataloguing/asset', async (req, res) => {
     const { model, pilot, interface: { connector, protocol, parameters } } = req.body;
 
@@ -75,6 +92,24 @@ router.post('/cataloguing/asset', async (req, res) => {
 */
 
 //Get all Method
+/**
+ * @swagger
+ * /cataloguing/asset:
+ *   get:
+ *     summary: Display all assets
+ *     description: Display all assets
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/asset'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.get('/cataloguing/asset', async (req, res) => {
     try {
         const asset = await ModelAsset.find();
@@ -86,6 +121,24 @@ router.get('/cataloguing/asset', async (req, res) => {
 })
 
 //Get by ID Method
+/**
+ * @swagger
+ * /cataloguing/asset/:id:
+ *   get:
+ *     summary: Display asset with ID
+ *     description: Display asset with ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/asset'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.get('/cataloguing/asset/:id', async (req, res) => {
     try {
         const asset = await ModelAsset.findById(req.params.id);
@@ -97,6 +150,24 @@ router.get('/cataloguing/asset/:id', async (req, res) => {
 })
 
 //Delete by ID Method
+/**
+ * @swagger
+ * /cataloguing/asset/:id:
+ *   delete:
+ *     summary: Delete asset with ID
+ *     description: Delete asset with ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/asset'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.delete('/cataloguing/asset/:id', async (req, res) => {
     try {
         const id = req.params.id;
@@ -107,7 +178,24 @@ router.delete('/cataloguing/asset/:id', async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 })
-
+/**
+ * @swagger
+ * /cataloguing/asset/Pilot/:PilotName:
+ *   get:
+ *     summary: Display all asset in a pilot
+ *     description: Display all asset in a pilot
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/asset'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.get('/cataloguing/asset/Pilot/:PilotName', async (req, res) => {
     try {
         const asset = await ModelAsset.find({ pilot: req.params.PilotName });
@@ -119,6 +207,24 @@ router.get('/cataloguing/asset/Pilot/:PilotName', async (req, res) => {
 })
 
 //Post Method
+/**
+ * @swagger
+ * /cataloguing/connector:
+ *   post:
+ *     summary: Create a connector
+ *     description: Create a connector
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/connector'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.post('/cataloguing/connector', async (req, res) => {
     const connector = new ModelConnector({
         name: req.body.name,
@@ -150,6 +256,24 @@ router.post('/cataloguing/connector', async (req, res) => {
 */
 
 //Get all Method
+/**
+ * @swagger
+ * /cataloguing/connector:
+ *   get:
+ *     summary: Get all connectors
+ *     description: Get all connectors
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/connector'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.get('/cataloguing/connector', async (req, res) => {
     try {
         const connector = await ModelConnector.find();
@@ -161,6 +285,24 @@ router.get('/cataloguing/connector', async (req, res) => {
 })
 
 //Get by ID Method
+/**
+ * @swagger
+ * /cataloguing/connector/:id:
+ *   get:
+ *     summary: Get connector with ID
+ *     description: Get connector with ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/connector'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.get('/cataloguing/connector/:id', async (req, res) => {
     try {
         const connector = await ModelConnector.findById(req.params.id);
@@ -172,6 +314,24 @@ router.get('/cataloguing/connector/:id', async (req, res) => {
 })
 
 //Delete by ID Method
+/**
+ * @swagger
+ * /cataloguing/connector/:id:
+ *   delete:
+ *     summary: Delete connector with ID
+ *     description: Delete connector with ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/connector'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.delete('/cataloguing/connector/:id', async (req, res) => {
     try {
         const id = req.params.id;
@@ -183,6 +343,24 @@ router.delete('/cataloguing/connector/:id', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /cataloguing/connectorTypes:
+ *   get:
+ *     summary: Get all connector types
+ *     description: Get all connector types
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/models/connector'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.get('/cataloguing/connectorTypes', async (req, res) => {
     try {
         const types = await ModelConnector.distinct('name');
@@ -191,6 +369,7 @@ router.get('/cataloguing/connectorTypes', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 })
+
 
 router.post('/data/upload/:asset_id', async (req, res) => {
     try {
