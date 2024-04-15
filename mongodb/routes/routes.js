@@ -5,18 +5,52 @@ const ModelConnector = require('../models/connector');
 const router = express.Router();
 const import_to_hadoop = require('../models/import_to_hadoop');
 
-//Post Method
 /**
  * @swagger
- * /cataloguing/asset:
+ * /api/cataloguing/asset:
  *   post:
  *     description: Create a new asset
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/asset'
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: asset
+ *         description: The asset to add
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             model:
+ *               type: object
+ *               properties:
+ *                 description:
+ *                   type: string
+ *                 type:
+ *                   type: string
+ *                 format:
+ *                   type: string
+ *               required:
+ *                 - description
+ *                 - type
+ *                 - format
+ *             pilot:
+ *               type: string
+ *             interface:
+ *               type: object
+ *               properties:
+ *                 connector:
+ *                   type: string
+ *                 protocol:
+ *                   type: string
+ *                 parameters:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                       value:
+ *                         type: string
  *     responses:
  *       200:
  *         description: Success
@@ -24,33 +58,45 @@ const import_to_hadoop = require('../models/import_to_hadoop');
  *         description: Bad request
  */
 router.post('/cataloguing/asset', async (req, res) => {
-    const { model, pilot, interface: { connector, protocol, parameters } } = req.body;
-
-    const asset = new ModelAsset({
-        model: {
-            description: model.description,
-            type: model.type,
-            format: model.format
-        },
-        pilot: pilot,
-        interface: {
-            name: connector,
-            protocol: protocol,
-            parameters: parameters.map(param => ({
-                name: param.name,
-                value: param.value
-            }))
-        }
-    });
-
     try {
+        const { model, pilot, interface } = req.body;
+
+        // Check if model is provided
+        if (!model || !model.description || !model.type || !model.format) {
+            return res.status(400).json({ message: "Model description, type, and format are required." });
+        }
+
+        // Extract interface properties
+        let connector, protocol, parameters;
+        if (interface) {
+            ({ connector, protocol, parameters } = interface);
+        }
+
+        // Create new asset instance
+        const asset = new ModelAsset({
+            model: {
+                description: model.description,
+                type: model.type,
+                format: model.format
+            },
+            pilot: pilot,
+            interface: {
+                name: connector,
+                protocol: protocol,
+                parameters: parameters ? parameters.map(param => ({
+                    name: param.name,
+                    value: param.value
+                })) : []
+            }
+        });
+
+        // Save asset to database
         const assetToSave = await asset.save();
         res.status(200).json(assetToSave);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 });
-
 
 /*JSON object example
 
@@ -94,16 +140,12 @@ router.post('/cataloguing/asset', async (req, res) => {
 //Get all Method
 /**
  * @swagger
- * /cataloguing/asset:
+ * /api/cataloguing/asset:
  *   get:
  *     summary: Display all assets
  *     description: Display all assets
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/asset'
+ *     produces:
+ *      - application/json
  *     responses:
  *       '200':
  *         description: Success
@@ -112,27 +154,34 @@ router.post('/cataloguing/asset', async (req, res) => {
  */
 router.get('/cataloguing/asset', async (req, res) => {
     try {
-        const asset = await ModelAsset.find();
-        res.json(asset)
+        const assets = await ModelAsset.find();
+        res.json({ Asset: assets }); // Wrap assets in an object with key 'Asset'
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-    catch (error) {
-        res.status(500).json({ message: error.message })
-    }
-})
+});
+
 
 //Get by ID Method
 /**
  * @swagger
- * /cataloguing/asset/:id:
+ * /api/cataloguing/asset/{id}:
  *   get:
  *     summary: Display asset with ID
  *     description: Display asset with ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/asset'
+ *     produces:
+ *      - application/json
+ *     parameters:
+ *      - in: path
+ *        name: id
+ *        description: Dispay Asset from DB.
+ *        schema:
+ *          type: string
+ *          required:
+ *            - id
+ *          properties:
+ *            id:
+ *              type: string
  *     responses:
  *       '200':
  *         description: Success
@@ -152,16 +201,23 @@ router.get('/cataloguing/asset/:id', async (req, res) => {
 //Delete by ID Method
 /**
  * @swagger
- * /cataloguing/asset/:id:
+ * /api/cataloguing/asset/{id}:
  *   delete:
- *     summary: Delete asset with ID
- *     description: Delete asset with ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/asset'
+ *     summary: Display asset with ID
+ *     description: Display asset with ID
+ *     produces:
+ *      - application/json
+ *     parameters:
+ *      - in: path
+ *        name: id
+ *        description: Dispay Asset from DB.
+ *        schema:
+ *          type: string
+ *          required:
+ *            - id
+ *          properties:
+ *            id:
+ *              type: string
  *     responses:
  *       '200':
  *         description: Success
@@ -180,16 +236,23 @@ router.delete('/cataloguing/asset/:id', async (req, res) => {
 })
 /**
  * @swagger
- * /cataloguing/asset/Pilot/:PilotName:
+ * /api/cataloguing/asset/Pilot/{PilotName}:
  *   get:
  *     summary: Display all asset in a pilot
  *     description: Display all asset in a pilot
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/asset'
+ *     produces:
+ *      - application/json
+ *     parameters:
+ *      - in: path
+ *        name: PilotName
+ *        description: Dispay Assets from DB.
+ *        schema:
+ *          type: string
+ *          required:
+ *            - PilotName
+ *          properties:
+ *            PilotName:
+ *              type: string
  *     responses:
  *       '200':
  *         description: Success
@@ -209,16 +272,33 @@ router.get('/cataloguing/asset/Pilot/:PilotName', async (req, res) => {
 //Post Method
 /**
  * @swagger
- * /cataloguing/connector:
+ * /api/cataloguing/connector:
  *   post:
  *     summary: Create a connector
  *     description: Create a connector
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/connector'
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: connector
+ *         description: The connector to add
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *             protocol:
+ *               type: string
+ *             parameters:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   value:
+ *                     type: string
  *     responses:
  *       '200':
  *         description: Success
@@ -258,16 +338,12 @@ router.post('/cataloguing/connector', async (req, res) => {
 //Get all Method
 /**
  * @swagger
- * /cataloguing/connector:
+ * /api/cataloguing/connector:
  *   get:
  *     summary: Get all connectors
  *     description: Get all connectors
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/connector'
+ *     produces:
+ *      - application/json
  *     responses:
  *       '200':
  *         description: Success
@@ -287,16 +363,23 @@ router.get('/cataloguing/connector', async (req, res) => {
 //Get by ID Method
 /**
  * @swagger
- * /cataloguing/connector/:id:
+ * /api/cataloguing/connector/{id}:
  *   get:
  *     summary: Get connector with ID
  *     description: Get connector with ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/connector'
+ *     produces:
+ *      - application/json
+ *     parameters:
+ *      - in: path
+ *        name: id
+ *        description: Dispay Connector from DB.
+ *        schema:
+ *          type: string
+ *          required:
+ *            - id
+ *          properties:
+ *            id:
+ *              type: string
  *     responses:
  *       '200':
  *         description: Success
@@ -316,16 +399,23 @@ router.get('/cataloguing/connector/:id', async (req, res) => {
 //Delete by ID Method
 /**
  * @swagger
- * /cataloguing/connector/:id:
+ * /api/cataloguing/connector/{id}:
  *   delete:
  *     summary: Delete connector with ID
  *     description: Delete connector with ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/connector'
+ *     produces:
+ *      - application/json
+ *     parameters:
+ *      - in: path
+ *        name: id
+ *        description: Dispay Connector from DB.
+ *        schema:
+ *          type: string
+ *          required:
+ *            - id
+ *          properties:
+ *            id:
+ *              type: string
  *     responses:
  *       '200':
  *         description: Success
@@ -345,16 +435,12 @@ router.delete('/cataloguing/connector/:id', async (req, res) => {
 
 /**
  * @swagger
- * /cataloguing/connectorTypes:
+ * /api/cataloguing/connectorTypes:
  *   get:
  *     summary: Get all connector types
  *     description: Get all connector types
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/models/connector'
+ *     produces:
+ *      - application/json
  *     responses:
  *       '200':
  *         description: Success

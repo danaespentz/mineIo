@@ -1,8 +1,10 @@
 require('dotenv').config();
-const cors = require('cors');
 const express = require('express');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const swaggerUI = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 const mongoString = process.env.DATABASE_URL;
 
 mongoose.connect(mongoString);
@@ -16,6 +18,7 @@ database.once('open', async () => {
     console.log('Database Connected');
 });
 const app = express();
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 app.use(cors())
 app.use(express.json());
 app.use(bodyParser.json());
