@@ -12,12 +12,9 @@ const import_to_hadoop = require('../models/import_to_hadoop');
  *     description: Create a new asset
  *     produces:
  *       - application/json
- *     parameters:
- *       - in: body
- *         name: asset
- *         description: The asset to add
- *         required: true
- *         schema:
+ *     requestBody:
+ *        content:
+ *          application/json:
  *           type: object
  *           properties:
  *             model:
@@ -90,13 +87,59 @@ router.post('/cataloguing/asset', async (req, res) => {
             }
         });
 
-        // Save asset to database
+        // Save the first asset to the database
         const assetToSave = await asset.save();
+
+        // If the interface name is "Kafka", save a second asset with different interface
+        if (connector.toLowerCase() === "kafka") {
+            // Generate the collection name for the second asset
+            const collectionName = "historical_" + parameters[2].value;
+
+            const secondAsset = new ModelAsset({
+                model: {
+                    description: model.description,
+                    type: model.type,
+                    format: model.format
+                },
+                pilot: pilot,
+                interface: {
+                    name: "mongo", // Different interface name
+                    protocol: "http",
+                    parameters: [
+                        {
+                            name: "server",
+                            value: "157.90.226.222"
+                        },
+                        {
+                            name: "port",
+                            value: "22"
+                        },
+                        {
+                            name: "collection",
+                            value: collectionName // Use generated collection name
+                        },
+                        {
+                            name: "username",
+                            value: "root"
+                        },
+                        {
+                            name: "password",
+                            value: "root"
+                        }
+                    ]
+                }
+            });
+
+            // Save the second asset to the database
+            await secondAsset.save();
+        }
+
         res.status(200).json(assetToSave);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 });
+
 
 /*JSON object example
 
@@ -108,8 +151,8 @@ router.post('/cataloguing/asset', async (req, res) => {
 	},
 	"pilot": "Pilot4",
 	"interface": {
-		"connector": "mongo",
-		"protocol": "http",
+		"connector": "kafka",
+		"protocol": "kafka",
 		"parameters": [
 			{
 				"name": "server",
@@ -120,8 +163,8 @@ router.post('/cataloguing/asset', async (req, res) => {
 				"value": "portnum"
 			},
 			{
-				"name": "collection",
-				"value": "collection_name"
+				"name": "topic",
+				"value": "temp1"
 			},
 			{
 				"name": "username",
@@ -278,12 +321,9 @@ router.get('/cataloguing/asset/Pilot/:PilotName', async (req, res) => {
  *     description: Create a connector
  *     produces:
  *       - application/json
- *     parameters:
- *       - in: body
- *         name: connector
- *         description: The connector to add
- *         required: true
- *         schema:
+ *     requestBody:
+ *        content:
+ *          application/json:
  *           type: object
  *           properties:
  *             name:
@@ -456,7 +496,44 @@ router.get('/cataloguing/connectorTypes', async (req, res) => {
     }
 })
 
-
+//Upload data to Collections
+/**
+ * @swagger
+ * /api/data/upload/{asset_id}:
+ *   post:
+ *     summary: Upload data to collection
+ *     description: Upload data to collection based on asset ID
+ *     produces:
+ *      - application/json
+ *     parameters:
+ *       - in: path
+ *         name: asset_id
+ *         required: true
+ *         description: ID of the asset to upload data to collection.
+ *         schema:
+ *           type: string
+ *           required:
+ *             - asset_id
+ *           properties:
+ *             asset_id:
+ *               type: string
+ *     requestBody:
+ *       required: true 
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               values:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.post('/data/upload/:asset_id', async (req, res) => {
     try {
         const asset = await ModelAsset.findById(req.params.asset_id);
@@ -495,6 +572,32 @@ router.post('/data/upload/:asset_id', async (req, res) => {
     }
 });
 
+//Retrieve data from collection Method
+/**
+ * @swagger
+ * /api/data/get/{asset_id}:
+ *   get:
+ *     summary: Retrieve data from collection
+ *     description: Retrieve data from collection based on asset ID
+ *     produces:
+ *      - application/json
+ *     parameters:
+ *      - in: path
+ *        name: asset_id
+ *        description: ID of the asset to retrieve data from collection.
+ *        schema:
+ *          type: string
+ *          required:
+ *            - asset_id
+ *          properties:
+ *            asset_id:
+ *              type: string
+ *     responses:
+ *       '200':
+ *         description: Success
+ *       '400':
+ *         description: Bad request
+ */
 router.get('/data/get/:asset_id', async (req, res) => {
     try {
         const asset = await ModelAsset.findById(req.params.asset_id);
