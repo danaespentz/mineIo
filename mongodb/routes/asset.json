@@ -1,3 +1,92 @@
+//Import a new asset: mongo
+{
+	"model": {
+		"description": "asset related to the drill machine",
+		"type": "sensorial",
+		"format": "json"
+	},
+	"pilot": "Pilot4",
+	"interface": {
+		"connector": "mongo",
+		"protocol": "http",
+		"parameters": [
+			{
+				"name": "server",
+				"value": "49.13.196.96"
+			},
+			{
+				"name": "port",
+				"value": "22"
+			},
+			{
+				"name": "collection_name",
+				"value": "data_asset_1"
+			},
+			{
+				"name": "username",
+				"value": "root"
+			},
+			{
+				"name": "password",
+				"value": "root"
+			}
+		]
+	}
+}
+
+//Import a new asset: kafka
+{
+	"model": {
+		"description": "asset related to telescope",
+		"type": "sensorial",
+		"format": "json"
+	},
+	"pilot": "Pilot6",
+	"interface": {
+		"connector": "kafka",
+		"protocol": "kafka",
+		"parameters": [
+			{
+				"name": "bootstrap.servers",
+				"value": "49.13.196.96"
+			},
+			{
+				"name": "port",
+				"value": "8092"
+			},
+			{
+				"name": "topic",
+				"value": "temp1"
+			},
+			{
+				"name": "username",
+				"value": "root"
+			},
+			{
+				"name": "password",
+				"value": "root"
+			}
+		]
+	}
+}
+
+//Import a new connector mongo
+{
+    "name": "mongodb",
+    "protocol": "http",
+    "parameters_name": "mongo",
+    "parameters_value": "cluster0"
+}
+
+//Import a new connector kafka
+{
+    "name": "kafka",
+    "protocol": "kafka",
+    "parameters_name": "topic",
+    "parameters_value": "temp1"
+}
+
+//Import into data_asset 
 {
 	"values": [
 		{
