@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const ModelAsset = require('../models/asset');
 const ModelConnector = require('../models/connector');
 const router = express.Router();
+const fs = require('fs');
 const import_to_hadoop = require('../models/import_to_hadoop');
 
 /**
@@ -568,6 +569,78 @@ router.post('/data/upload/:asset_id', async (req, res) => {
 
         res.status(200).json({ message: 'Data assets successfully imported' });
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+const JSONStream = require("JSONStream");
+// Upload file to Collections
+/**
+ * @swagger
+ * /api/file/upload/{asset_id}/{file_path}:
+ *   post:
+ *     summary: "Upload data to collection"
+ *     description: "Upload data to collection based on asset ID"
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: file_path
+ *         required: true
+ *         description: "Path of the data to upload data to collection"
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: asset_id
+ *         required: true
+ *         description: "ID of the asset to upload data to collection"
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: "Success"
+ *       '400':
+ *         description: "Bad request"
+ */
+router.post('/file/upload/:asset_id/:file_path', async (req, res) => {
+    try {
+        const asset = await ModelAsset.findById(req.params.asset_id);
+        if (!asset) {
+            return res.status(404).json({ message: "Asset not found" });
+        }
+
+        const collectionParam = asset.interface.parameters.find(param => param.name === 'collection');
+        const collectionName = collectionParam ? collectionParam.value : null;
+
+        if (!collectionName) {
+            return res.status(400).json({ message: "Collection name not specified" });
+        }
+
+        const collection = mongoose.connection.collection(collectionName);
+
+        const filePath = req.params.file_path;
+
+        let array = [];
+
+        const dataStreamFromFile = fs.createReadStream(filePath);
+        dataStreamFromFile.pipe(JSONStream.parse('*')).on('data', async (data) => {
+            delete data._id;
+            array.push(data);
+            if (array.length === 1000) {
+                dataStreamFromFile.pause();
+                await collection.insertMany(array);
+                array = [];
+                process.stdout.write('.');
+                dataStreamFromFile.resume();
+            }
+        }).on('end', async () => {
+            if (array.length > 0) {
+                await collection.insertMany(array); // Insert remaining data
+                console.log('\nImport complete, closing connection...');
+                res.status(200).json({ message: 'Data assets successfully imported' });
+            }
+        });
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ message: error.message });
     }
 });
